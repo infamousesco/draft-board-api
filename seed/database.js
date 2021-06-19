@@ -1,14 +1,14 @@
-'use strict';
+"use strict";
 
-const bcryptjs = require('bcryptjs');
-const Context = require('./context');
+const bcryptjs = require("bcryptjs");
+const Context = require("./context");
 
 class Database {
   constructor(seedData, enableLogging) {
     this.courses = seedData.courses;
-    this.users = seedData.users;
+    this.players = seedData.players;
     this.enableLogging = enableLogging;
-    this.context = new Context('fsjstd-restapi.db', enableLogging);
+    this.context = new Context("fsjstd-restapi.db", enableLogging);
   }
 
   log(message) {
@@ -20,33 +20,37 @@ class Database {
   tableExists(tableName) {
     this.log(`Checking if the ${tableName} table exists...`);
 
-    return this.context
-      .retrieveValue(`
+    return this.context.retrieveValue(
+      `
         SELECT EXISTS (
           SELECT 1 
           FROM sqlite_master 
           WHERE type = 'table' AND name = ?
         );
-      `, tableName);
+      `,
+      tableName
+    );
   }
 
-  createUser(user) {
-    return this.context
-      .execute(`
-        INSERT INTO Users
-          (firstName, lastName, emailAddress, password, createdAt, updatedAt)
+  createPlayer(player) {
+    return this.context.execute(
+      `
+        INSERT INTO players
+          (firstName, lastName, position, teamName, byeWeek)
         VALUES
-          (?, ?, ?, ?, datetime('now'), datetime('now'));
+          // (?, ?, ?, ?, );
       `,
-      user.firstName,
-      user.lastName,
-      user.emailAddress,
-      user.password);
+      player.firstName,
+      player.lastName,
+      player.position,
+      player.teamName,
+      player.byeWeek
+    );
   }
 
   createCourse(course) {
-    return this.context
-      .execute(`
+    return this.context.execute(
+      `
         INSERT INTO Courses
           (userId, title, description, estimatedTime, materialsNeeded, createdAt, updatedAt)
         VALUES
@@ -56,23 +60,24 @@ class Database {
       course.title,
       course.description,
       course.estimatedTime,
-      course.materialsNeeded);
+      course.materialsNeeded
+    );
   }
 
-  async hashUserPasswords(users) {
-    const usersWithHashedPasswords = [];
+  async hashUserPasswords(Players) {
+    const PlayersWithHashedPasswords = [];
 
-    for (const user of users) {
+    for (const player of players) {
       const hashedPassword = await bcryptjs.hash(user.password, 10);
-      usersWithHashedPasswords.push({ ...user, password: hashedPassword });
+      PlayersWithHashedPasswords.push({ ...user, password: hashedPassword });
     }
 
-    return usersWithHashedPasswords;
+    return PlayersWithHashedPasswords;
   }
 
-  async createUsers(users) {
-    for (const user of users) {
-      await this.createUser(user);
+  async createPlayers(players) {
+    for (const player of players) {
+      await this.createPlayer(player);
     }
   }
 
@@ -83,49 +88,49 @@ class Database {
   }
 
   async init() {
-    const userTableExists = await this.tableExists('Users');
+    const userTableExists = await this.tableExists("Players");
 
     if (userTableExists) {
-      this.log('Dropping the Users table...');
+      this.log("Dropping the Players table...");
 
       await this.context.execute(`
-        DROP TABLE IF EXISTS Users;
+        DROP TABLE IF EXISTS Players;
       `);
     }
 
-    this.log('Creating the Users table...');
+    this.log("Creating the Players table...");
 
     await this.context.execute(`
-      CREATE TABLE Users (
+      CREATE TABLE Players (
         id INTEGER PRIMARY KEY AUTOINCREMENT, 
         firstName VARCHAR(255) NOT NULL DEFAULT '', 
         lastName VARCHAR(255) NOT NULL DEFAULT '', 
-        emailAddress VARCHAR(255) NOT NULL DEFAULT '' UNIQUE, 
-        password VARCHAR(255) NOT NULL DEFAULT '', 
-        createdAt DATETIME NOT NULL, 
-        updatedAt DATETIME NOT NULL
+        position VARCHAR(255) NOT NULL DEFAULT ''  
+        teamName VARCHAR(255) NOT NULL DEFAULT '', 
+        byeWeek INTEGER NOT NULL
+        
       );
     `);
 
-    this.log('Hashing the user passwords...');
+    this.log("Hashing the user passwords...");
 
-    const users = await this.hashUserPasswords(this.users);
+    const Players = await this.hashUserPasswords(this.Players);
 
-    this.log('Creating the user records...');
+    this.log("Creating the user records...");
 
-    await this.createUsers(users);
+    await this.createPlayers(Players);
 
-    const courseTableExists = await this.tableExists('Courses');
+    const courseTableExists = await this.tableExists("Courses");
 
     if (courseTableExists) {
-      this.log('Dropping the Courses table...');
+      this.log("Dropping the Courses table...");
 
       await this.context.execute(`
         DROP TABLE IF EXISTS Courses;
       `);
     }
 
-    this.log('Creating the Courses table...');
+    this.log("Creating the Courses table...");
 
     await this.context.execute(`
       CREATE TABLE Courses (
@@ -137,15 +142,15 @@ class Database {
         createdAt DATETIME NOT NULL, 
         updatedAt DATETIME NOT NULL, 
         userId INTEGER NOT NULL DEFAULT -1 
-          REFERENCES Users (id) ON DELETE CASCADE ON UPDATE CASCADE
+          REFERENCES Players (id) ON DELETE CASCADE ON UPDATE CASCADE
       );
     `);
 
-    this.log('Creating the course records...');
+    this.log("Creating the course records...");
 
     await this.createCourses(this.courses);
 
-    this.log('Database successfully initialized!');
+    this.log("Database successfully initialized!");
   }
 }
 
