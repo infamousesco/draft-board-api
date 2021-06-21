@@ -18,24 +18,8 @@ router.get(
   "/api/players",
   asyncHandler(async (req, res) => {
     console.log(req);
-    const players = await Player.findAll({
-      attributes: [
-        "player.id",
-        "player.firstName",
-        "player.lastName",
-        "player.position",
-        "player.teamName",
-        "player.byeWeek",
-      ],
-    });
+    const players = await Player.findAll({});
     res.status(200).json(players);
-    // res.json({
-    //   id: player.id,
-    //   firstName: player.firstName,
-    //   lastName: player.lastName,
-    //   team: player.teamName,
-    //   byeWeek: player.byeWeek,
-    // });
   })
 );
 
