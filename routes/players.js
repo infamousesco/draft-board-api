@@ -2,7 +2,7 @@
 const Player = require("../models").Player;
 const express = require("express");
 const router = express.Router();
-//const { sequelize } = require("../models");
+const { sequelize } = require("../models");
 
 function asyncHandler(cb) {
   return async (req, res, next) => {
@@ -20,12 +20,12 @@ router.get(
     console.log(req);
     const players = await Player.findAll({
       attributes: [
-        "id",
-        "firstName",
-        "lastName",
-        "position",
-        "teamName",
-        "byeWeek",
+        "player.id",
+        "player.firstName",
+        "player.lastName",
+        "player.position",
+        "player.teamName",
+        "player.byeWeek",
       ],
     });
     res.status(200).json(players);
@@ -45,7 +45,7 @@ router.post(
     try {
       const player = await Player.create(req.body);
       res.location("/").status(201).end();
-      console.log(req.body);
+      console.log("Player added");
     } catch (error) {
       if (
         error.name === "SequelizeValidationError" ||

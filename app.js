@@ -3,6 +3,7 @@
 // load modules
 const express = require("express");
 const morgan = require("morgan");
+
 const { sequelize } = require("./models");
 const playerRouter = require("./routes/players");
 
@@ -13,6 +14,12 @@ const enableGlobalErrorLogging =
 // create the Express app
 const app = express();
 
+app.use(express.json());
+app.use(
+  express.urlencoded({
+    extended: true,
+  })
+);
 app.use(playerRouter);
 
 // setup morgan which gives us http request logging
