@@ -17,8 +17,15 @@ function asyncHandler(cb) {
 router.get(
   "/api/players",
   asyncHandler(async (req, res) => {
-    console.log(req);
     const players = await Player.findAll({});
+    res.status(200).json(players);
+  })
+);
+
+router.get(
+  "/api/players/:id",
+  asyncHandler(async (req, res) => {
+    const players = await Player.findByPk(req.params.id);
     res.status(200).json(players);
   })
 );
@@ -40,6 +47,36 @@ router.post(
       } else {
         throw error;
       }
+    }
+  })
+);
+
+router.put(
+  "/api/players/:id",
+  asyncHandler(async (req, res) => {
+    const players = await Player.findByPk(req.params.id);
+    if (players) {
+      await players.update(req.body);
+      res.status(204).json(players);
+    } else {
+      const err = new Error("Player not found");
+      err.status = 404;
+      next(err);
+    }
+  })
+);
+
+router.delete(
+  "/api/players/:id",
+  asyncHandler(async (req, res) => {
+    const players = await Player.findByPk(req.params.id);
+    if (players) {
+      await players.destroy(players);
+      res.status(200).json(players);
+    } else {
+      const err = new Error("Player not found");
+      err.status = 404;
+      next(err);
     }
   })
 );
