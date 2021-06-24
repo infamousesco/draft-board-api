@@ -6,6 +6,7 @@ const morgan = require("morgan");
 
 const { sequelize } = require("./models");
 const playerRouter = require("./routes/players");
+const cors = require('cors');
 
 // variable to enable global error logging
 const enableGlobalErrorLogging =
@@ -15,6 +16,7 @@ const enableGlobalErrorLogging =
 const app = express();
 
 app.use(express.json());
+app.use(cors());
 app.use(
   express.urlencoded({
     extended: true,
@@ -60,8 +62,14 @@ app.use((err, req, res, next) => {
   });
 });
 
-// set our port
-app.set("port", process.env.PORT || 5000);
+app.get('/products/:id', function (req, res, next) {
+  res.json({msg: 'This is CORS-enabled for all origins!'})
+})
+
+app.listen(5000, function () {
+  console.log('CORS-enabled web server listening on port 5000')
+})
+
 
 // start listening on our port
 const server = app.listen(app.get("port"), () => {
